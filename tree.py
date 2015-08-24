@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #encoding:utf-8
 from math import log
+import operator
 '''
 计算给定数据集的信息熵
 *信息熵的计算方法：H = P(x1)log2P(x1) + ......;
@@ -62,3 +63,36 @@ def createDataSet():
                             [0,0,'no'] ]
     labels = [ 'no surfacing', 'flippers' ] 
     return dataSet, labels           
+'''
+得到一个List里面元素出现次数最多的元素
+'''
+def majorityCnt(classList):
+    classCount = {}
+    for vote  in classList:
+        if vote not in classCount.keys():
+            classCount[ vote ] = 0
+        classCount[ vote ] += 1
+    sortedClassCount = sorted( classCount.iteritems(), key = operator.itemgetter(1),reverse = True)
+    return sortedClassCount[ 0 ][ 0 ]
+def createTree (dataSet, labels):
+    classList = [ example[ -1 ] for example in dataSet] #得到dataSet所有的类别
+    '''
+    当需要分类的元素全部属于一个类，就不需要分，直接就是一类;
+    '''
+    if classList.count(classList[ 0 ]) == len(classList):  #表示的是所有搜属于一个类别
+        return classList[ 0 ]
+    '''
+    遍历完所有特征值的时候进行多数表决;
+    '''
+    if len(dataSet[ 0 ]) == 1:
+        return majorityCnt(classList)
+    bestFeat = chooseBestFeat(dataSet) #每次遍历的时候都使用剩下特征值总相对最优的划分结果的特征值;
+    bestFeatLabel = labels[ bestFeat ] #得到最优特征值对应的标签值
+    myTree = {bestFeatLabel :{ }}  #构造树形
+    del (labels [bestFeat] )
+    featValue = [example[ bestFeat ] for example in dataSet] #得到对应特征值位上的不同取值并且合并成值不重复的元素List
+    uniqueVals = set( featValue )
+    for value in uniqueVals:
+        subLabels = labels[ : ]
+        myTree[ bestFeatLabel ] [ value ] = createTree(splitDataSet(dataSet, bestFeat, value), subLabels)
+    return myTree
